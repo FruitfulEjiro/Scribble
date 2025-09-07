@@ -5,7 +5,7 @@ export interface IUser {
   username: string;
   email: string;
   userType: 'user' | 'author' | 'admin';
-  refreshToken?: string;
+  refreshToken?: string | null;
   accessToken?: string;
   updatedAt: Date;
   createdAt: Date;

@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -11,6 +12,7 @@ import LoginDto from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IUser } from 'src/user/interface/user.interface';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class AuthService {
@@ -43,7 +45,12 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
 
-    const modUser = this.excludePassword(user)
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
+
+    const modUser = this.excludePassword(user);
     return {
       ...modUser,
       accessToken,
@@ -51,7 +58,7 @@ export class AuthService {
     };
   }
 
-  async login(data: LoginDto) {
+  async login(data: LoginDto): Promise<IUser> {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -61,12 +68,54 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
 
-    const modUser = this.excludePassword(user)
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
+
+    const modUser = this.excludePassword(user);
     return {
       ...modUser,
       accessToken,
       refreshToken,
     };
+  }
+
+  async updatePassword(
+    userId: string,
+    password: string,
+    newPassword: string,
+  ): Promise<IUser> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('user doesnt exist');
+
+    if (!this.verifyPassword(password, user.password))
+      throw new ForbiddenException('current password isnt correct');
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: await this.hashPassword(newPassword) },
+    });
+    if (!updatedUser) throw new NotFoundException('user not found');
+
+    return <IUser>updatedUser;
+  }
+
+  async logout(userId: string): Promise<{}> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('user not found');
+
+    this.generateAccessToken(user);
+    this.generateRefreshToken(user);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken: null,
+      },
+    });
+
+    return {};
   }
 
   private async hashPassword(password: string): Promise<string> {

@@ -29,6 +29,7 @@ model User {
   email String @unique
   password String
   userType UserType @default(user)
+  refreshToken String?
   updatedAt DateTime @default(now())
   createdAt DateTime @default(now())
 }
@@ -38,6 +39,6 @@ model Post {
   author String @db.Uuid
   title String 
   content String @db.Text 
-  upatedAt DateTime @default(now())
+  updatedAt DateTime @default(now())
   createdAt DateTime @default(now())
 }

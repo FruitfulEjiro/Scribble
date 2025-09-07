@@ -19,8 +19,8 @@ export class PostController {
 
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
-  @Roles(Role.Admin)
   @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   async createPost(@Body() data: CreatePostDto) {
     const post = await this.postService.createPost(data);
     return post;

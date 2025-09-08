@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -12,7 +13,7 @@ import LoginDto from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IUser } from 'src/user/interface/user.interface';
-import { UserService } from 'src/user/user.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -101,6 +102,38 @@ export class AuthService {
     return <IUser>updatedUser;
   }
 
+  async forgotPassword(email: string): Promise<{}> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new NotFoundException('user not found');
+
+    const resetLink = await this.generateResetLink({
+      id: user.id,
+      email: user.email,
+    });
+
+    // send code to user email
+    // -----------------
+
+    return { message: 'password reset link sent to email' };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{}> {
+    const payload = this.veriryResetToken(token);
+    if (!payload) throw new BadRequestException('token is invalid');
+
+    const user = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+    });
+    if (!user) throw new NotFoundException('user not found');
+
+    await this.prisma.user.update({
+      where: { email: payload.email },
+      data: { password: await this.hashPassword(newPassword) },
+    });
+
+    return { message: 'password reset successful' };
+  }
+
   async logout(userId: string): Promise<{}> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('user not found');
@@ -160,5 +193,22 @@ export class AuthService {
       secret: this.configService.get<string>('refreshTokenSecret'),
       expiresIn: this.configService.get<string>('refreshTokenExpiresIn'),
     });
+  }
+
+  private generateResetLink(payload: { id: string; email: string }): string {
+    const token = this.jwt.sign(payload, {
+      expiresIn: this.configService.get<string>('resetTokenExpiresIn'),
+    });
+
+    const resetLink = `${this.configService.get<string>('frontendUrl')}/reset-password?token=${token}`;
+    return resetLink;
+  }
+
+  private veriryResetToken(token: string): {
+    id: string;
+    email: string;
+  } {
+    const payload = this.jwt.verify(token);
+    return payload;
   }
 }

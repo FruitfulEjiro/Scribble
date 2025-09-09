@@ -148,7 +148,7 @@ export class AuthService {
       },
     });
 
-    return {};
+    return { message: 'logged out successfully' };
   }
 
   private async hashPassword(password: string): Promise<string> {

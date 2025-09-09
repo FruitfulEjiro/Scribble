@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -46,5 +48,29 @@ export class AuthController {
     );
 
     return updatedUser;
+  }
+
+  @Get('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body('email') email: string) {
+    const data = await this.authService.forgotPassword(email);
+    return data;
+  }
+
+  @Patch('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Query('token') token: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    const data = await this.authService.resetPassword(token, newPassword);
+    return data;
+  }
+
+  @Get('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Request() req) {
+    const data = await this.authService.logout(req.user.id);
+    return data;
   }
 }

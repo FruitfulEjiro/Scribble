@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import CreateAccountDto from './dto/auth.dto';
 import LoginDto from './dto/login.dto';
 import { AuthGuard } from './guard/auth.guard';
+import UpdatePasswordDto from './dto/update-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -22,7 +23,7 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() data: CreateAccountDto) {
-    const user = await this.authService.createUser(data);
+    const user = await this.authService.register(data);
     return user;
   }
 
@@ -36,15 +37,11 @@ export class AuthController {
   @Patch('update-password')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard)
-  async updatePassword(
-    @Request() req,
-    @Body() password: string,
-    newPassword: string,
-  ) {
+  async updatePassword(@Request() req, @Body() data: UpdatePasswordDto) {
     const updatedUser = await this.authService.updatePassword(
       req.user.id,
-      password,
-      newPassword,
+      data.password,
+      data.newPassword,
     );
 
     return updatedUser;
@@ -69,6 +66,7 @@ export class AuthController {
 
   @Get('logout')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
   async logout(@Request() req) {
     const data = await this.authService.logout(req.user.id);
     return data;

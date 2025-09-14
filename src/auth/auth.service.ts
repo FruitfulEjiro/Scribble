@@ -12,7 +12,7 @@ import * as bcrypt from 'bcryptjs';
 import LoginDto from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { IUser } from 'src/user/interface/user.interface';
+import IUser from 'src/user/interface/user.interface';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -23,22 +23,29 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async createUser(data: Prisma.UserCreateInput): Promise<IUser> {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
+  async register(data: Prisma.UserCreateInput): Promise<IUser> {
+    const [existingUser, existingUsername] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { email: data.email },
+      }),
+      this.prisma.user.findUnique({
+        where: { username: data.username },
+      }),
+    ]);
     if (existingUser)
       throw new ConflictException('user with email already exists');
+    if (existingUsername)
+      throw new ConflictException('username already exists');
 
-    const hashedPassword = await this.hashPassword(data.password);
+    const hashedPassword = await this.hashPassword(data.password!);
 
     const user = await this.prisma.user.create({
       data: {
-        firstname: data.firstname,
-        lastname: data.lastname,
-        username: data.username,
-        email: data.email,
-        password: hashedPassword,
+        firstname: data.firstname!,
+        lastname: data.lastname!,
+        username: data.username!,
+        email: data.email!,
+        password: hashedPassword!,
       },
     });
     if (!user) throw new InternalServerErrorException('failed to create post');
@@ -51,7 +58,7 @@ export class AuthService {
       data: { refreshToken },
     });
 
-    const modUser = this.excludePassword(user);
+    const modUser = this.sanitizeUserObj(user);
     return {
       ...modUser,
       accessToken,
@@ -74,7 +81,7 @@ export class AuthService {
       data: { refreshToken },
     });
 
-    const modUser = this.excludePassword(user);
+    const modUser = this.sanitizeUserObj(user);
     return {
       ...modUser,
       accessToken,
@@ -99,7 +106,7 @@ export class AuthService {
     });
     if (!updatedUser) throw new NotFoundException('user not found');
 
-    return <IUser>updatedUser;
+    return <IUser>this.sanitizeUserObj(updatedUser);
   }
 
   async forgotPassword(email: string): Promise<{}> {
@@ -151,21 +158,33 @@ export class AuthService {
     return { message: 'logged out successfully' };
   }
 
-  private async hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    return hashedPassword;
+  private async hashPassword(password: string) {
+    try {
+      const salt = await bcrypt.genSalt(12);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      return hashedPassword;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
-  private async verifyPassword(
-    password: string,
-    dbPassword: string,
-  ): Promise<boolean> {
-    return await bcrypt.compare(password, dbPassword);
+  private async verifyPassword(password: string, dbPassword: string) {
+    try {
+      return await bcrypt.compare(password, dbPassword);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
-  private excludePassword(user: any) {
-    const { password, ...result } = user;
+  private sanitizeUserObj(user: any) {
+    const {
+      password,
+      refreshToken,
+      passwordResetToken,
+      passwordResetTokenExpiresAt,
+      passwordChangedAt,
+      ...result
+    } = user;
     return result;
   }
 

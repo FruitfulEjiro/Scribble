@@ -11,7 +11,7 @@ export class UserService {
       where: { id: userId },
     });
     if (!user) throw new InternalServerErrorException('failed to update user');
-    return this.excludePassword(user);
+    return this.sanitizeUserObj(user);
   }
 
   async updateUser(userId: string, data: Prisma.UserUpdateInput) {
@@ -21,17 +21,25 @@ export class UserService {
     });
     if (!user) throw new InternalServerErrorException('failed to update user');
 
-    return this.excludePassword(user);
+    return this.sanitizeUserObj(user);
   }
 
-  async deleteUser(userId: string): Promise<void> {
+  async deleteUser(userId: string): Promise<{}> {
     await this.prisma.user.delete({
       where: { id: userId },
     });
+    return { message: 'user deleted successfully' };
   }
 
-  private async excludePassword(user: any) {
-    const { password, ...result } = user;
+  private sanitizeUserObj(user: any) {
+    const {
+      password,
+      refreshToken,
+      passwordResetToken,
+      passwordResetTokenExpiresAt,
+      passwordChangedAt,
+      ...result
+    } = user;
     return result;
   }
 }

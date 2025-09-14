@@ -29,6 +29,8 @@ model User {
   email String @unique
   password String
   userType UserType @default(user)
+  posts Post[]
+  groupPosts UserGroupPost[] 
   refreshToken String?
   passwordResetToken String?
   passwordResetTokenExpiresAt DateTime?
@@ -37,11 +39,38 @@ model User {
   createdAt DateTime @default(now())
 }
 
+enum Status {
+  published
+  draft
+  archived
+}
+
 model Post {
   id String @id @default(uuid())
-  author String @db.Uuid
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
   title String 
-  content String @db.Text 
+  content String
+  tags String[]
+  category String
+  status Status @default(published)
   updatedAt DateTime @default(now())
   createdAt DateTime @default(now())
+}
+
+model GroupPost {
+  id String @id @default(uuid())
+  title String
+  content String
+  tags String[]
+  category String
+  users UserGroupPost[]
+}
+
+model UserGroupPost {
+  @@id([userId, groupPostId])
+  user User @relation(fields: [userId], references: [id])
+  userId String
+  groupPost GroupPost @relation(fields: [groupPostId], references: [id])
+  groupPostId String
 }

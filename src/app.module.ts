@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { ConfigModule } from '@nestjs/config';
+import { GroupPostModule } from './group-post/group-post.module';
 import config from './config/config';
 
 @Module({
@@ -16,6 +17,7 @@ import config from './config/config';
     AuthModule,
     UserModule,
     PostModule,
+    GroupPostModule,
   ],
   controllers: [AppController],
   providers: [AppService],

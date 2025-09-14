@@ -22,23 +22,17 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('you are not logged in');
     }
-    try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: <string>this.configService.get<string>('accessTokenSecret'),
-      });
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.id },
-      });
-      if (!user) throw new UnauthorizedException('you are not logged in');
-      if (user.passwordChangedAt!.getTime() > payload.iat)
-        throw new UnauthorizedException(
-          'password was changed, Login in again!',
-        );
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: <string>this.configService.get<string>('accessTokenSecret'),
+    });
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.id },
+    });
+    if (!user) throw new UnauthorizedException('you are not logged in');
+    if (user.passwordChangedAt && user.passwordChangedAt!.getTime() > payload.iat.getTime())
+      throw new UnauthorizedException('password was changed, Login in again!');
 
-      request['user'] = payload;
-    } catch {
-      throw new UnauthorizedException();
-    }
+    request['user'] = payload;
     return true;
   }
 }

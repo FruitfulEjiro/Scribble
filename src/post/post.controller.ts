@@ -13,9 +13,9 @@ import {
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import CreatePostDto from './dto/create-post.dto';
-import { Roles } from 'src/roles/roles.decorator';
-import { Role } from 'src/roles/roles.enum';
-import { RolesGuard } from 'src/roles/roles.guard';
+import { Roles } from 'src/auth/decorator/roles.decorator';
+import { Role } from 'src/auth/types/roles.enum';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import UpdatePostDto from './dto/update-post.dto';
 import { PostExistsPipe } from './pipes/post-exists.pipe';

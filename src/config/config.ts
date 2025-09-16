@@ -7,4 +7,11 @@ export default () => ({
   resetTokenExpiresIn: process.env.RESET_TOKEN_EXPIRES_IN!,
   accessTokenSecret: process.env.ACCESS_TOKEN_SECRET!,
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET!,
+  inviteExpiresIn: process.env.INVITE_EXPIRES_IN!,
+  frontendUrl: process.env.FRONTEND_URL!,
+  emailHost: process.env.EMAIL_HOST!,
+  emailPort: parseInt(process.env.EMAIL_PORT!, 10),
+  fromEmail: process.env.FROM_EMAIL!,
+  emailUser: process.env.EMAIL_USER!,
+  emailPassword: process.env.EMAIL_PASSWORD!,
 });

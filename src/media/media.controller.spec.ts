@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GroupPostController } from './group-post.controller';
+import { MediaController } from './media.controller';
 
-describe('GroupPostController', () => {
-  let controller: GroupPostController;
+describe('MediaController', () => {
+  let controller: MediaController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [GroupPostController],
+      controllers: [MediaController],
     }).compile();
 
-    controller = module.get<GroupPostController>(GroupPostController);
+    controller = module.get<MediaController>(MediaController);
   });
 
   it('should be defined', () => {

@@ -5,19 +5,21 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { ConfigModule } from '@nestjs/config';
-import { GroupPostModule } from './group-post/group-post.module';
+import { MediaModule } from './media/media.module';
+import { EmailModule } from './email/email.module';
 import config from './config/config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [config]
+      load: [config],
     }),
     AuthModule,
     UserModule,
     PostModule,
-    GroupPostModule,
+    MediaModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

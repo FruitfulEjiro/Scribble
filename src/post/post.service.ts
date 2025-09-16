@@ -6,10 +6,18 @@ import {
 import { Prisma } from '@prisma/client';
 import PrismaService from 'src/prisma/prisma.service';
 import { IPost } from './interface/post.interface';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import EmailService from 'src/email/email.service';
 
 @Injectable()
 export class PostService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly configService: ConfigService,
+    private readonly email: EmailService
+  ) {}
 
   async createPost(data: Prisma.PostUncheckedCreateInput): Promise<IPost> {
     const post = await this.prisma.post.create({ data });
@@ -18,8 +26,45 @@ export class PostService {
     return <IPost>post;
   }
 
+  async inviteContributor(email: string, postId: string) {
+    const author = await this.prisma.user.findUnique({ where: { email } });
+    if (!author) throw new NotFoundException("user doesn't exist");
+
+    // send email to user to invite them to collaborate
+
+    // send invited user a notification
+
+    return { message: 'invite sent successfully' };
+  }
+
+  async acceptInvite(token: string) {
+    const payload = await this.verifyInvite(token);
+
+    const [user, post] = await Promise.all([
+      this.prisma.user.findUnique({ where: { email: payload.email } }),
+      this.prisma.post.findUnique({ where: { id: payload.postId } }),
+    ]);
+    if (!user) throw new NotFoundException('user not found');
+    if (!post) throw new NotFoundException('post not found');
+
+    await this.prisma.postContributors.create({
+      data: {
+        userId: user.id,
+        postId: payload.postId,
+      },
+    });
+
+    // notify author by mail of the accepted invite
+
+    // send author a notification
+
+    return { message: 'invite accepted' };
+  }
+
   async findPostById(postId: string): Promise<IPost> {
-    const post = await this.prisma.post.findUnique({ where: { id: postId, status: "published" } });
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId, status: 'published' },
+    });
     if (!post) throw new NotFoundException('post not found');
 
     return <IPost>post;
@@ -56,7 +101,9 @@ export class PostService {
   }
 
   async getDraftById(postId: string): Promise<IPost> {
-    const post = await this.prisma.post.findUnique({ where: { id: postId, status: "draft" } });
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId, status: 'draft' },
+    });
     if (!post) throw new NotFoundException('post not found');
 
     return <IPost>post;
@@ -78,5 +125,25 @@ export class PostService {
     if (!deletePost) throw new NotFoundException('post not found');
 
     return { message: 'post deleted successfully' };
+  }
+
+  private generateInviteLink(payload: {
+    postId: string;
+    email: string;
+  }): string {
+    const token = this.jwt.sign(payload, {
+      expiresIn: this.configService.get<string>('inviteExpiresIn'),
+    });
+
+    const resetLink = `${this.configService.get<string>('frontendUrl')}/accept-invite?token=${token}`;
+    return resetLink;
+  }
+
+  private verifyInvite(token: string): {
+    postId: string;
+    email: string;
+  } {
+    const payload = this.jwt.verify(token);
+    return payload;
   }
 }

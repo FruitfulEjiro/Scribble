@@ -19,6 +19,7 @@ import { RolesGuard } from 'src/roles/roles.guard';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import UpdatePostDto from './dto/update-post.dto';
 import { PostExistsPipe } from './pipes/post-exists.pipe';
+import { PostOwnerGuard } from './guard/post-owner.guard';
 
 @Controller('post')
 export class PostController {
@@ -35,6 +36,19 @@ export class PostController {
     });
     return post;
   }
+
+  @Post('invite')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard, PostOwnerGuard)
+  async inviteContributor(
+    @Param('id') id: string,
+    @Body('email') email: string,
+  ) {
+    const invite = await this.postService.inviteContributor(email, id);
+    return invite;
+  }
+
+  
 
   @Get('get/:id')
   @HttpCode(HttpStatus.OK)

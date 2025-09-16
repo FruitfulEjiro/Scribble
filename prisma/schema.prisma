@@ -21,6 +21,17 @@ enum UserType {
   user
 }
 
+enum Status {
+  published
+  draft
+  archived
+}
+
+enum PostType {
+  regular
+  group
+}
+
 model User {
   id String @id @default(uuid())
   firstname String
@@ -30,19 +41,13 @@ model User {
   password String
   userType UserType @default(user)
   posts Post[]
-  groupPosts UserGroupPost[] 
+  contibutedPosts PostContributors[]
   refreshToken String?
   passwordResetToken String?
   passwordResetTokenExpiresAt DateTime?
   passwordChangedAt DateTime?
   updatedAt DateTime @default(now())
   createdAt DateTime @default(now())
-}
-
-enum Status {
-  published
-  draft
-  archived
 }
 
 model Post {
@@ -53,24 +58,17 @@ model Post {
   content String
   tags String[]
   category String
+  type PostType
+  contributors PostContributors[]
   status Status @default(published)
   updatedAt DateTime @default(now())
   createdAt DateTime @default(now())
 }
 
-model GroupPost {
-  id String @id @default(uuid())
-  title String
-  content String
-  tags String[]
-  category String
-  users UserGroupPost[]
-}
-
-model UserGroupPost {
-  @@id([userId, groupPostId])
+model PostContributors {
+  @@id([userId, postId])
   user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
   userId String
-  groupPost GroupPost @relation(fields: [groupPostId], references: [id])
-  groupPostId String
+  postId String
 }

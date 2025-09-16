@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GroupPostService } from './group-post.service';
+import { MediaService } from './media.service';
 
-describe('GroupPostService', () => {
-  let service: GroupPostService;
+describe('MediaService', () => {
+  let service: MediaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GroupPostService],
+      providers: [MediaService],
     }).compile();
 
-    service = module.get<GroupPostService>(GroupPostService);
+    service = module.get<MediaService>(MediaService);
   });
 
   it('should be defined', () => {

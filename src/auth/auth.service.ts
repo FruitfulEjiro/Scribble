@@ -14,6 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import IUser from 'src/user/interface/user.interface';
 import * as crypto from 'crypto';
+import EmailService from 'src/email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly configService: ConfigService,
+    private readonly email: EmailService,
   ) {}
 
   async register(data: Prisma.UserCreateInput): Promise<IUser> {
@@ -57,6 +59,8 @@ export class AuthService {
       where: { id: user.id },
       data: { refreshToken },
     });
+
+    await this.email.sendWelcomeMail(user.email);
 
     const modUser = this.sanitizeUserObj(user);
     return {
@@ -125,7 +129,7 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{}> {
-    const payload = this.veriryResetToken(token);
+    const payload = this.verifyResetToken(token);
     if (!payload) throw new BadRequestException('token is invalid');
 
     const user = await this.prisma.user.findUnique({
@@ -223,7 +227,7 @@ export class AuthService {
     return resetLink;
   }
 
-  private veriryResetToken(token: string): {
+  private verifyResetToken(token: string): {
     id: string;
     email: string;
   } {

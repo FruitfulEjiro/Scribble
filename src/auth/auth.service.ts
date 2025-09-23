@@ -85,6 +85,8 @@ export class AuthService {
       data: { refreshToken },
     });
 
+    await this.email.sendLoginMail(user.email);
+
     const modUser = this.sanitizeUserObj(user);
     return {
       ...modUser,
@@ -122,8 +124,7 @@ export class AuthService {
       email: user.email,
     });
 
-    // send code to user email
-    // -----------------
+    await this.email.sendPasswordResetCode(email, resetLink);
 
     return { message: 'password reset link sent to email' };
   }

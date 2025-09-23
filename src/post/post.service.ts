@@ -27,10 +27,16 @@ export class PostService {
   }
 
   async inviteContributor(email: string, postId: string) {
-    const author = await this.prisma.user.findUnique({ where: { email } });
-    if (!author) throw new NotFoundException("user doesn't exist");
+    const [collaborator, post] = await Promise.all([
+      this.prisma.user.findUnique({ where: { email } }),
+      this.prisma.post.findUnique({ where: { id: postId } }),
+    ]);
+    if (!collaborator) throw new NotFoundException("user doesn't exist");
+    if (!post) throw new NotFoundException("user doesn't exist");
 
-    // send email to user to invite them to collaborate
+    const inviteLink = await this.generateInviteLink({ postId, email });
+
+    await this.email.sendInviteToCollaborate(email, inviteLink);
 
     // send invited user a notification
 
@@ -54,7 +60,11 @@ export class PostService {
       },
     });
 
-    // notify author by mail of the accepted invite
+    const author = await this.prisma.user.findUnique({
+      where: { id: post.authorId },
+    });
+
+    await this.email.notifyCollaboraionAcceptedMail(author!.email, post.title);
 
     // send author a notification
 
@@ -164,8 +174,8 @@ export class PostService {
       expiresIn: this.configService.get<string>('inviteExpiresIn'),
     });
 
-    const resetLink = `${this.configService.get<string>('frontendUrl')}/accept-invite?token=${token}`;
-    return resetLink;
+    const inviteLink = `${this.configService.get<string>('frontendUrl')}/accept-invite?token=${token}`;
+    return inviteLink;
   }
 
   private verifyInvite(token: string): {

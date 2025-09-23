@@ -16,7 +16,7 @@ export class PostService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly configService: ConfigService,
-    private readonly email: EmailService
+    private readonly email: EmailService,
   ) {}
 
   async createPost(data: Prisma.PostUncheckedCreateInput): Promise<IPost> {
@@ -116,6 +116,35 @@ export class PostService {
     if (!drafts) throw new NotFoundException('no drafts found');
 
     return <IPost[]>drafts;
+  }
+
+  async searchPosts(query: string, page = 1, limit = 5): Promise<{}> {
+    const skip = (page - 1) * limit;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.post.findMany({
+        where: {
+          OR: [{ title: { contains: query, mode: 'insensitive' } }],
+        },
+        skip,
+        take: limit,
+      }),
+
+      this.prisma.post.count({
+        where: {
+          OR: [
+            { title: { contains: query, mode: 'insensitive' } },
+            // { content: { contains: query, mode: 'insensitive' } },
+          ],
+        },
+      }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
   }
 
   async deletePost(postId: string, userId: string): Promise<{}> {

@@ -48,8 +48,6 @@ export class PostController {
     return invite;
   }
 
-  
-
   @Get('get/:id')
   @HttpCode(HttpStatus.OK)
   async getPostById(@Param('id') id: string) {

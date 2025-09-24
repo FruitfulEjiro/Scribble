@@ -43,7 +43,6 @@ export class AuthController {
       data.password,
       data.newPassword,
     );
-
     return updatedUser;
   }
 

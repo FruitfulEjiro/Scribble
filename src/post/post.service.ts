@@ -96,7 +96,7 @@ export class PostService {
   ): Promise<IPost> {
     const updatePost = await this.prisma.post.update({
       where: { id: postId, authorId: userId },
-      data: data,
+      data,
     });
     if (!updatePost) throw new NotFoundException('post not found');
 
@@ -105,8 +105,20 @@ export class PostService {
 
   async saveDraft(data: Prisma.PostUncheckedCreateInput): Promise<IPost> {
     const post = await this.prisma.post.create({ data });
-    if (!post) throw new InternalServerErrorException('failed to create post');
+    if (!post) throw new InternalServerErrorException('failed to save draft');
 
+    return <IPost>post;
+  }
+
+  async publishDraft(
+    postId: string,
+    data: Prisma.PostUpdateInput,
+  ): Promise<IPost> {
+    const post = await this.prisma.post.update({
+      where: { id: postId },
+      data,
+    });
+    if (!post) throw new NotFoundException('post not found');
     return <IPost>post;
   }
 
@@ -128,12 +140,12 @@ export class PostService {
     return <IPost[]>drafts;
   }
 
-  async searchPosts(query: string, page = 1, limit = 5): Promise<{}> {
+  async searchPosts(search: string, page = 1, limit = 5): Promise<{}> {
     const skip = (page - 1) * limit;
     const [data, total] = await this.prisma.$transaction([
       this.prisma.post.findMany({
         where: {
-          OR: [{ title: { contains: query, mode: 'insensitive' } }],
+          OR: [{ title: { contains: search, mode: 'insensitive' } }],
         },
         skip,
         take: limit,
@@ -142,7 +154,7 @@ export class PostService {
       this.prisma.post.count({
         where: {
           OR: [
-            { title: { contains: query, mode: 'insensitive' } },
+            { title: { contains: search, mode: 'insensitive' } },
             // { content: { contains: query, mode: 'insensitive' } },
           ],
         },

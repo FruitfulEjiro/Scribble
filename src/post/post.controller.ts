@@ -6,8 +6,10 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -20,6 +22,7 @@ import { AuthGuard } from 'src/auth/guard/auth.guard';
 import UpdatePostDto from './dto/update-post.dto';
 import { PostExistsPipe } from './pipes/post-exists.pipe';
 import { PostOwnerGuard } from './guard/post-owner.guard';
+import SaveDraftDto from './dto/save-draft.dto';
 
 @Controller('post')
 export class PostController {
@@ -65,7 +68,7 @@ export class PostController {
 
   @Patch('update/:id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, PostOwnerGuard)
   async updatePost(
     @Request() req,
     @Param('id', PostExistsPipe) id: string,
@@ -73,6 +76,68 @@ export class PostController {
   ) {
     const updatePost = await this.postService.updatePost(req.user.id, id, data);
     return updatePost;
+  }
+
+  @Post('save-draft')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  async saveDraft(@Request() req, @Body() data: SaveDraftDto) {
+    const post = await this.postService.saveDraft({
+      authorId: req.user.id,
+      title: data.title || 'Untitled',
+      content: data.content || '',
+      type: data.type || 'regular',
+      category: data.category || 'Uncategorized',
+      tags: data.tags || [],
+      status: 'draft',
+    });
+    return post;
+  }
+
+  @Post('publish-draft/:id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard, PostOwnerGuard)
+  async publishDraft(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() data: SaveDraftDto,
+  ) {
+    const post = await this.postService.publishDraft(id, {
+      title: data.title || 'Untitled',
+      content: data.content || '',
+      type: data.type || 'regular',
+      category: data.category || 'Uncategorized',
+      tags: data.tags || [],
+      status: 'draft',
+    });
+    return post;
+  }
+
+  @Get('draft/:id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard, PostOwnerGuard)
+  async getDraftById(@Param('id') id: string) {
+    const draft = await this.postService.getDraftById(id);
+    return draft;
+  }
+
+  @Get('get-user-drafts')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  async getUserDrafts(@Request() req) {
+    const drafts = await this.postService.getUserDrafts(req.user.id);
+    return drafts;
+  }
+
+  @Get('search')
+  @HttpCode(HttpStatus.OK)
+  async searchPosts(
+    @Query('search') search: string,
+    @Query('page', ParseIntPipe) page: number,
+    @Query('limit', ParseIntPipe) limit: number,
+  ) {
+    const posts = await this.postService.searchPosts(search, page, limit);
+    return posts;
   }
 
   @Delete('delete/:id')

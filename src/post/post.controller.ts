@@ -40,11 +40,11 @@ export class PostController {
     return post;
   }
 
-  @Post('invite')
+  @Post('invite/:id')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard, PostOwnerGuard)
   async inviteContributor(
-    @Param('id') id: string,
+    @Param('id', PostExistsPipe) id: string,
     @Body('email') email: string,
   ) {
     const invite = await this.postService.inviteContributor(email, id);
@@ -53,7 +53,7 @@ export class PostController {
 
   @Get('get/:id')
   @HttpCode(HttpStatus.OK)
-  async getPostById(@Param('id') id: string) {
+  async getPostById(@Param('id', PostExistsPipe) id: string) {
     const post = await this.postService.findPostById(id);
     return post;
   }
@@ -98,7 +98,7 @@ export class PostController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard, PostOwnerGuard)
   async publishDraft(
-    @Param('id') id: string,
+    @Param('id', PostExistsPipe) id: string,
     @Request() req,
     @Body() data: SaveDraftDto,
   ) {
@@ -116,7 +116,7 @@ export class PostController {
   @Get('draft/:id')
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard, PostOwnerGuard)
-  async getDraftById(@Param('id') id: string) {
+  async getDraftById(@Param('id', PostExistsPipe) id: string) {
     const draft = await this.postService.getDraftById(id);
     return draft;
   }
@@ -138,6 +138,14 @@ export class PostController {
   ) {
     const posts = await this.postService.searchPosts(search, page, limit);
     return posts;
+  }
+
+  @Get(":id/collaborators")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard, PostOwnerGuard)
+  async getPostCollaborators(@Param('id', PostExistsPipe) id: string) {
+    const collaborators = await this.postService.getPostCollaborators(id);
+    return collaborators;
   }
 
   @Delete('delete/:id')

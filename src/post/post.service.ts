@@ -9,6 +9,7 @@ import { IPost } from './interface/post.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import EmailService from 'src/email/email.service';
+import { IPostContributor } from './interface/post-contributor.interface';
 
 @Injectable()
 export class PostService {
@@ -167,6 +168,15 @@ export class PostService {
       page,
       lastPage: Math.ceil(total / limit),
     };
+  }
+
+  async getPostCollaborators(postId: string): Promise<IPostContributor[]> {
+    const collaborators = await this.prisma.postContributors.findMany({
+      where: { postId },
+      include: { user: true },
+    });
+
+    return <IPostContributor[]>collaborators;
   }
 
   async deletePost(postId: string, userId: string): Promise<{}> {

@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────
+
+enum PostStatus {
+  draft
+  published
+  archived
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+// ─────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────
+
+model User {
+  id                String     @id @default(uuid())
+  firstname         String     @db.VarChar(32)
+  lastname          String     @db.VarChar(32)
+  email             String     @unique
+  username          String     @unique
+  image             Json?
+  password          String?    @db.VarChar(255)
+  passwordChangedAt DateTime?
+  refreshToken      String?    @unique
+  otp               String?
+  otpExpiresAt      DateTime?
+  isEmailVerified   Boolean    @default(false)
+  mfaSecret         String?
+  mfaEnabled        Boolean    @default(false)
+  backupCodes       String[]
+  googleSignIn      Boolean    @default(false)
+  status            UserStatus @default(active)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  posts         Post[]             @relation("PostAuthor")
+  contributions PostContributors[] @relation("Contributor")
+}
+
+model Post {
+  id           String             @id @default(uuid())
+  title        String             @db.VarChar(256)
+  description  String             @db.VarChar(512)
+  content      String[]           @db.Text
+  coverImage   Json?
+  status       PostStatus         @default(published)
+  readTime     Int? // estimated read time in minutes
+  tags         String[]
+  category     String
+  publishedAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  authorId     String
+  author       User               @relation("PostAuthor", fields: [authorId], references: [id])
+  contributors PostContributors[]
+}
+
+model PostContributors {
+  id          String @id @default(uuid())
+  userId      String
+  postId      String
+  post        Post   @relation(fields: [postId], references: [id])
+  contributor User   @relation("Contributor", fields: [userId], references: [id])
+}

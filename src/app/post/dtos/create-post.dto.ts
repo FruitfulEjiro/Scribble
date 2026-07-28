@@ -1,18 +1,20 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { PostStatus } from '../enums';
+import { Category, PostStatus } from '../enums';
 
 export class ImageDto {
-  @IsString()
-  @IsOptional()
-  secure_url?: string;
+  @IsUrl()
+  @IsNotEmpty()
+  secure_url!: string;
 
   @IsString()
   @IsOptional()
@@ -29,23 +31,24 @@ export class CreatePostDto {
   description!: string;
 
   @IsArray()
-  @IsNotEmpty()
+  @IsString({ each: true })
+  @ArrayMinSize(1)
   content!: string[];
 
   @IsOptional()
   @ValidateNested()
   @Type(() => ImageDto)
-  image?: ImageDto;
+  coverImage?: ImageDto;
 
-  @IsString()
-  @IsNotEmpty()
-  category!: string;
+  @IsEnum(Category)
+  category!: Category;
 
   @IsEnum(PostStatus)
   @IsOptional()
   status?: PostStatus = PostStatus.PUBLISHED;
 
   @IsArray()
+  @IsString({ each: true })
   @IsOptional()
   tags?: string[];
 }

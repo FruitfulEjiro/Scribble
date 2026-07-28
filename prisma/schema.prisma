@@ -28,6 +28,87 @@ enum UserStatus {
   inactive
 }
 
+enum ContributorRole {
+  owner
+  editor
+  viewer
+}
+
+enum Category {
+  technology
+  web_development
+  programming
+  ai_machine_learning
+  cybersecurity
+  data_science
+  mobile_development
+  open_source
+  gadgets_reviews
+  startups
+  business
+  marketing
+  entrepreneurship
+  personal_finance
+  investing
+  cryptocurrency
+  real_estate
+  career_productivity
+  remote_work
+  ecommerce
+  health_wellness
+  fitness
+  mental_health
+  food_recipes
+  travel
+  fashion_beauty
+  home_diy
+  parenting
+  relationships
+  self_improvement
+  minimalism
+  sustainability
+  design
+  photography
+  writing_books
+  art
+  music
+  film_tv
+  gaming
+  pop_culture
+  automotive
+  crafts_hobbies
+  education
+  science
+  history
+  politics
+  philosophy
+  nature
+  religion_spirituality
+  opinion_editorial
+}
+
+enum InviteStatus {
+  pending
+  accepted
+  declined
+  expired
+  revoked
+}
+
+enum ContributorStatus {
+  pending
+  active
+  inactive
+}
+
+// ─────────────────────────────────────────
+// Generators
+// ─────────────────────────────────────────
+
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 // ─────────────────────────────────────────
 // Models
 // ─────────────────────────────────────────
@@ -53,8 +134,25 @@ model User {
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
-  posts         Post[]             @relation("PostAuthor")
-  contributions PostContributors[] @relation("Contributor")
+  posts           Post[]             @relation("PostAuthor")
+  contributions   PostContributors[] @relation("Contributor")
+  sentInvites     Invites[]          @relation("SentInvites")
+  receivedInvites Invites[]          @relation("ReceivedInvites")
+  profile         Profile?           @relation("ProfileOwner")
+}
+
+model Profile {
+  id           String   @id @default(uuid())
+  bio          String?  @db.Text
+  /// [ImageDto]
+  profileImage Json?
+  location     String?
+  /// [SocialLinks]
+  socialLinks  Json
+  userId       String   @unique
+  user         User     @relation("ProfileOwner", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Post {
@@ -62,23 +160,59 @@ model Post {
   title        String             @db.VarChar(256)
   description  String             @db.VarChar(512)
   content      String[]           @db.Text
+  /// [ImageDto]
   coverImage   Json?
   status       PostStatus         @default(published)
   readTime     Int? // estimated read time in minutes
   tags         String[]
-  category     String
+  category     Category
+  version      Int                @default(1)
   publishedAt  DateTime?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   authorId     String
-  author       User               @relation("PostAuthor", fields: [authorId], references: [id])
+  author       User               @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   contributors PostContributors[]
+  invites      Invites[]
+
+  @@index([tags], type: Gin)
+  @@index([category, createdAt])
 }
 
 model PostContributors {
-  id          String @id @default(uuid())
+  id          String            @id @default(uuid())
   userId      String
   postId      String
-  post        Post   @relation(fields: [postId], references: [id])
-  contributor User   @relation("Contributor", fields: [userId], references: [id])
+  role        ContributorRole   @default(editor)
+  invitedAt   DateTime
+  acceptedAt  DateTime?
+  status      ContributorStatus @default(pending)
+  post        Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  contributor User              @relation("Contributor", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model Invites {
+  id            String          @id @default(uuid())
+  postId        String
+  post          Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  invitedById   String
+  invitedBy     User            @relation("SentInvites", fields: [invitedById], references: [id], onDelete: Cascade)
+  email         String
+  invitedUserId String?
+  invitedUser   User?           @relation("ReceivedInvites", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  role          ContributorRole
+  status        InviteStatus    @default(pending)
+  token         String          @unique
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  declinedAt    DateTime?
+  revokedAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([postId, email])
+  @@index([email])
+  @@index([token])
 }

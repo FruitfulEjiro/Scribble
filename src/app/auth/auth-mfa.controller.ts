@@ -5,12 +5,10 @@ import {
   HttpStatus,
   Post,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthMfaService } from './auth-mfa.service';
-import { AuthGuard } from './guards';
-import { CurrentUser } from './decorators';
+import { CurrentUser } from '../../lib/decorators';
 import { AuthenticatedUser } from 'src/lib/types/auth.types';
 
 @Controller('mfa')
@@ -18,14 +16,12 @@ export class AuthMfaController {
   constructor(private readonly mfaService: AuthMfaService) {}
 
   @Post('setup-mfa')
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   async setupMfa(@CurrentUser() user: AuthenticatedUser) {
     return await this.mfaService.setup(user.id, user.email);
   }
 
   @Post('confirm-mfa')
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   async confirmMfa(
     @CurrentUser() user: AuthenticatedUser,
@@ -35,7 +31,6 @@ export class AuthMfaController {
   }
 
   @Post('verify-mfa')
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   async verifyMfa(
     @CurrentUser() user: AuthenticatedUser,
@@ -78,7 +73,6 @@ export class AuthMfaController {
   }
 
   @Post('disable-mfa')
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   async disableMfa(@CurrentUser() user: AuthenticatedUser) {
     return this.mfaService.disableMfa(user.id);

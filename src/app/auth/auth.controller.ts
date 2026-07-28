@@ -13,10 +13,9 @@ import {
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dtos';
 import { Response } from 'express';
-import { CurrentUser, Public } from './decorators';
-import { AuthGuard } from './guards/auth.guard';
-import { JwtRefreshGuard } from './guards';
+import { CurrentUser, Public } from '../../lib/decorators';
 import { AuthenticatedUser } from 'src/lib/types/auth.types';
+import { JwtRefreshGuard } from 'src/lib/guards';
 
 @Controller('auth')
 export class AuthController {
@@ -149,7 +148,6 @@ export class AuthController {
   }
 
   @Post('change-password')
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   async changePassword(
     @Body()
@@ -195,7 +193,6 @@ export class AuthController {
   }
 
   @Get('logout')
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   async logout(
     @CurrentUser() user: AuthenticatedUser,
@@ -203,18 +200,23 @@ export class AuthController {
   ) {
     await this.authService.logout(user.id);
 
-    res.clearCookie();
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      path: '/',
+    });
+
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      path: '/auth/refresh-tokens',
+    });
 
     return {
       status: 'success',
       message: 'logout successful',
     };
-  }
-
-  @Public()
-  @Delete('test/:id')
-  @HttpCode(HttpStatus.OK)
-  async test(@Param('id') id: string) {
-    return this.authService.test(id);
   }
 }

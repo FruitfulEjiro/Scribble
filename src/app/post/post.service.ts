@@ -1,10 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CreatePostDto } from './dtos';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
+import { CreatePostDto, EditPostDto } from './dtos';
 import { PostHelper } from './helper';
 import { PostRepo } from './repository/post.repository';
 import { AuthenticatedUser } from 'src/lib/types/auth.types';
 import { PostStatus } from './enums';
-import { FilterDto, PaginationDto } from 'src/lib/dtos';
+import { FilterDto } from 'src/lib/dtos';
+import { MediaService } from 'src/shared/media';
 
 @Injectable()
 export class PostService {
@@ -12,6 +17,7 @@ export class PostService {
   constructor(
     private readonly helper: PostHelper,
     private readonly postRepo: PostRepo,
+    private readonly mediaService: MediaService,
   ) {}
 
   async create(data: CreatePostDto, user: AuthenticatedUser) {
@@ -35,6 +41,8 @@ export class PostService {
         return data;
       });
 
+    if (!post) throw new InternalServerErrorException('failed to create post');
+
     return post;
   }
 
@@ -44,8 +52,23 @@ export class PostService {
     return post;
   }
 
-  async findPaginatedPosts(filter: FilterDto, options?: PaginationDto) {
-    const post = await this.postRepo.searchPaginated(filter, options);
+  async findPaginatedPosts(filter: FilterDto) {
+    const post = await this.postRepo.searchPaginated(filter);
     return post;
+  }
+
+  async deletePost(id: string) {
+    const post = await this.postRepo.findById(id);
+
+    // delete cloudinary image
+    if (post?.coverImage && post.coverImage.public_id) {
+      await this.mediaService.deleteImage(post.coverImage.public_id!);
+    }
+    // delete post
+    await this.postRepo.delete(id);
+  }
+
+  async editPost(id: string, data: EditPostDto) {
+    const updatedPost = await this.postRepo.editPost(id, data);
   }
 }

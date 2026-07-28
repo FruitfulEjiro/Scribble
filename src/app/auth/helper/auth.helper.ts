@@ -34,8 +34,8 @@ export class AuthHelper {
     try {
       return await bcrypt.compare(data, DBData);
     } catch (err) {
-      this.logger.error("couldn't verify password", err);
-      throw new InternalServerErrorException("couldn't verify password");
+      this.logger.error("couldn't verify", err);
+      throw new InternalServerErrorException("couldn't verify");
     }
   }
 
@@ -100,18 +100,6 @@ export class AuthHelper {
     return {
       accessToken,
     };
-  }
-
-  async verifyAccessToken(token: string) {
-    return await this.jwt.verify(token, {
-      secret: process.env['ACCESS_TOKEN_SECRET'],
-    });
-  }
-
-  async verifyRefreshToken(token: string) {
-    return await this.jwt.verify(token, {
-      secret: process.env['REFRESH_TOKEN_SECRET'],
-    });
   }
 
   hashCode(code: string) {

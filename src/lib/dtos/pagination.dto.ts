@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { PAGINATION } from '../constants';
 
 export interface PaginatedResult<T> {
@@ -10,12 +10,26 @@ export interface PaginatedResult<T> {
   data: T[];
 }
 
+export interface SearchOptions {
+  page?: number;
+  limit?: number;
+  sort?:
+    | string
+    | {
+        _relevance: {
+          fields: string[];
+          search: string;
+          sort: 'asc' | 'desc';
+        };
+      };
+}
+
 export class PaginationDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number = PAGINATION.DEFAULT_LIMIT;
+  page?: number = PAGINATION.DEFAULT_PAGE;
 
   @IsOptional()
   @Type(() => Number)
@@ -25,5 +39,6 @@ export class PaginationDto {
   limit?: number = PAGINATION.DEFAULT_LIMIT;
 
   @IsOptional()
+  @IsString()
   sort?: string;
 }

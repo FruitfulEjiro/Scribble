@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PaginatedResult, PaginationDto } from '../dtos';
+import { PaginatedResult, PaginationDto, SearchOptions } from '../dtos';
 
 interface PrismaDelegate<T, CreateInput, WhereInput, UpdateInput> {
   create(args: { data: CreateInput }): Promise<T>;
@@ -41,7 +41,7 @@ export abstract class BaseRepository<
 
   async findPaginated(
     filter?: WhereInput,
-    options?: PaginationDto,
+    options?: SearchOptions,
   ): Promise<PaginatedResult<T>> {
     const page = options!.page || 1;
     const limit = options!.limit || 10;
@@ -51,7 +51,7 @@ export abstract class BaseRepository<
       this.model.findMany({
         where: filter,
         skip,
-        take: limit,
+        take: +limit,
         orderBy: options?.sort || { createdAt: 'desc' },
       }),
       this.model.count({ where: filter! }),
@@ -67,7 +67,7 @@ export abstract class BaseRepository<
   }
 
   async findById(id: string): Promise<T | null> {
-    return await this.model.findUnique({ where: id });
+    return await this.model.findUnique({ where: { id } });
   }
 
   async update(id: string, data: UpdateInput): Promise<T | null> {

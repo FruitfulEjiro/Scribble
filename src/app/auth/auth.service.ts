@@ -6,12 +6,11 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/lib/database';
 import { CreateUserDto } from './dtos';
 import { AuthHelper } from './helper';
 import EventEmitter2 from 'eventemitter2';
-import { AuthEvents, EVENTS } from '../events';
 import { AuthRepo } from './repository';
+import { AuthEvents, EVENTS } from 'src/shared/events';
 
 @Injectable()
 export class AuthService {
@@ -143,8 +142,10 @@ export class AuthService {
   async verifyOtp(email: string, otp: string) {
     const user = await this.authRepo.findOne({ email });
     if (!user) throw new NotFoundException('user not found');
+    
+    if (!user.otp) throw new ForbiddenException('invalid or expired otp code');
 
-    if (!(await this.helper.bcryptVerify(otp, user.otp!)))
+    if (!(await this.helper.bcryptVerify(otp, user.otp)))
       throw new ForbiddenException('invalid otp code');
 
     const { accessToken, refreshToken } = await this.helper.generateTokens({
@@ -242,7 +243,7 @@ export class AuthService {
       .then(() => this.logger.log('otp saved to DB'));
 
     this.eventEmitter.emit(
-      EVENTS.RESET_PASSWORD_EMAIL,
+      EVENTS.RESET_PASSWORD,
       new AuthEvents.SignupOtp(email, code),
     );
 
@@ -283,10 +284,5 @@ export class AuthService {
     return {
       user: null,
     };
-  }
-
-  async test(id: string) {
-    return this.authRepo.findAll();
-    // return this.authRepo.delete(id);
   }
 }

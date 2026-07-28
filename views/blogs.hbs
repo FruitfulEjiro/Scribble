@@ -1,0 +1,116 @@
+<nav class="navbar">
+  <div class="container">
+    <a href="/" class="navbar-brand">Scribble.</a>
+    <div class="navbar-links">
+      <a href="/login" class="btn btn-outline" style="padding: 0.5rem 1rem;">Log In</a>
+      <a href="/register" class="btn btn-primary" style="padding: 0.5rem 1rem;">Sign Up</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container" style="padding-top: 3rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+      <h1 style="margin-bottom: 0.5rem;">Explore Stories</h1>
+      <p style="color: rgba(201, 209, 217, 0.7);">Discover the latest thinking from across the network.</p>
+    </div>
+    
+    <div>
+      <input type="text" class="form-control" placeholder="Search blogs..." style="min-width: 250px;">
+    </div>
+  </div>
+
+  <div class="blog-grid" style="margin-top: 1rem;">
+    {{#if blogs}}
+      {{#each blogs}}
+        <article class="card blog-card">
+          <div class="blog-card-content">
+            <h4 class="blog-card-title"><a href="/blogs/{{this.id}}">{{this.title}}</a></h4>
+            <p class="blog-card-excerpt">{{this.excerpt}}</p>
+          </div>
+          <div class="blog-card-meta">
+            <span>By {{this.author.name}}</span>
+            <span>{{this.readTime}} min read</span>
+          </div>
+        </article>
+      {{/each}}
+    {{else}}
+      <!-- Dummy Content for visualization when no blogs are passed from controller -->
+      <article class="card blog-card">
+        <div class="blog-card-content">
+          <h4 class="blog-card-title"><a href="#">The Future of Minimalist Design</a></h4>
+          <p class="blog-card-excerpt">Exploring how less continues to be more in the evolving landscape of digital interfaces and user experiences.</p>
+        </div>
+        <div class="blog-card-meta">
+          <span>By Alex Rivera</span>
+          <span>5 min read</span>
+        </div>
+      </article>
+
+      <article class="card blog-card">
+        <div class="blog-card-content">
+          <h4 class="blog-card-title"><a href="#">Understanding Glassmorphism</a></h4>
+          <p class="blog-card-excerpt">A deep dive into the frosted glass effect that's taking over UI design in modern web applications.</p>
+        </div>
+        <div class="blog-card-meta">
+          <span>By Sam Taylor</span>
+          <span>8 min read</span>
+        </div>
+      </article>
+
+      <article class="card blog-card">
+        <div class="blog-card-content">
+          <h4 class="blog-card-title"><a href="#">Why Typography Matters</a></h4>
+          <p class="blog-card-excerpt">How choosing the right font can dramatically change how users perceive your content and brand.</p>
+        </div>
+        <div class="blog-card-meta">
+          <span>By Jordan Lee</span>
+          <span>4 min read</span>
+        </div>
+      </article>
+      
+      <article class="card blog-card">
+        <div class="blog-card-content">
+          <h4 class="blog-card-title"><a href="#">Building Fast Web Apps</a></h4>
+          <p class="blog-card-excerpt">Techniques and strategies for optimizing performance in modern JavaScript frameworks.</p>
+        </div>
+        <div class="blog-card-meta">
+          <span>By Casey Smith</span>
+          <span>6 min read</span>
+        </div>
+      </article>
+      
+      <article class="card blog-card">
+        <div class="blog-card-content">
+          <h4 class="blog-card-title"><a href="#">The Art of Storytelling</a></h4>
+          <p class="blog-card-excerpt">How to structure your technical articles to engage readers from the first sentence to the last.</p>
+        </div>
+        <div class="blog-card-meta">
+          <span>By Morgan Doe</span>
+          <span>7 min read</span>
+        </div>
+      </article>
+      
+      <article class="card blog-card">
+        <div class="blog-card-content">
+          <h4 class="blog-card-title"><a href="#">State Management in 2026</a></h4>
+          <p class="blog-card-excerpt">A comprehensive review of the current state of state management libraries and patterns.</p>
+        </div>
+        <div class="blog-card-meta">
+          <span>By Taylor Swift</span>
+          <span>10 min read</span>
+        </div>
+      </article>
+    {{/if}}
+  </div>
+  
+  <div style="display: flex; justify-content: center; margin: 2rem 0 4rem;">
+    <button class="btn btn-outline">Load More</button>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2026 Scribble. All rights reserved.</p>
+  </div>
+</footer>
